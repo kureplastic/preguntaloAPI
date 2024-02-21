@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("preguntaloAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ff5c07fcb8471cf0f87f9917759844332ae8481c")]
 [assembly: System.Reflection.AssemblyProductAttribute("preguntaloAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("preguntaloAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
