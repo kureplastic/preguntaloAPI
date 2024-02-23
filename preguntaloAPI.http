@@ -1,6 +1,0 @@
-@preguntaloAPI_HostAddress = http://localhost:5247
-
-GET {{preguntaloAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

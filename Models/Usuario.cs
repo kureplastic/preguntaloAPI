@@ -8,12 +8,15 @@ public class Usuario{
         public string Apellido { get; set; } = "";
         [Required]
         public string Nombre { get; set; } ="";
+        [Required]
+        public string DNI { get; set; } ="";
+        [Required]
         public string Email { get; set; } ="";
+        [Required]
         public string Password { get; set; } ="";
-        public int RatingId { get; set; }
+        public int? RatingId { get; set; }
         public string? FotoPerfil { get; set; }
-        public IFormFile? AvatarFile { get; set; }
-        public int ValidacionId { get; set; }
+        public int? ValidacionId { get; set; }
         
 
 }

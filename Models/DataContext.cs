@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace preguntaloAPI.Models;
-
-public class DataContext : DbContext
+namespace preguntaloAPI.Models
 {
-    public DataContext(DbContextOptions<DataContext> options) : base(options)
+    public class DataContext : DbContext
     {
-    }
+        public DataContext(DbContextOptions<DataContext> options) : base(options)
+        {
 
-    public DbSet<Usuario> Usuarios { get; set; } = null!;
+        }
+        public DbSet<Usuario> Usuarios { get; set; } 
+        public DbSet<Consulta> Consultas { get; set; }
+    }
 }
