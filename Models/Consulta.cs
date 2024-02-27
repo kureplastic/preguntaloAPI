@@ -2,6 +2,7 @@ namespace preguntaloAPI.Models;
 
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class Consulta{
     //*Consulta debe tener un id tipo int, 
@@ -14,6 +15,8 @@ public class Consulta{
     //*un campo "Puntuacion Negativa" de tipo int
         public int Id { get; set; }
         public int UsuarioId { get; set; }
+        [ForeignKey(nameof(UsuarioId))]
+        public Usuario? Usuario { get; set; }
         [Required]
         public string? Titulo {get; set;} 
         [Required]

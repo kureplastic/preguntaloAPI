@@ -24,16 +24,16 @@ namespace preguntaloAPI.Controllers
                 this.contexto = contexto;
                 this.config = config;
             }
-            /***
-            **Metodos necesarios:
-            **      - registrar usuario: Registrar(Usuario usuario)
-            **      - editar usuario: Editar(Usuario usuario)
-            **      - obtener Perfil: Perfil()
-            **       - login de usuario: Login()
-            ***/
+            /**
+            *Metodos necesarios:
+            *       - registrar usuario: Registrar(Usuario usuario)
+            *       - editar usuario: Editar(Usuario usuario)
+            *       - obtener Perfil: Perfil()
+            *       - login de usuario: Login()
+            **/
 
 
-            // GET: Usuarios/Perfil/Id
+            ////** GET: Usuarios/Perfil
             [HttpGet("Perfil")]
             public async Task<IActionResult> Perfil() {
                 try{
@@ -46,7 +46,7 @@ namespace preguntaloAPI.Controllers
                 }
             }
 
-            // POST Usuarios/Registrar
+            ////** POST Usuarios/Registrar
             [HttpPost("Registrar")]
             [AllowAnonymous]
             public async Task<ActionResult> RegistrarUsuario([FromBody] Usuario nuevo) 
@@ -92,10 +92,10 @@ namespace preguntaloAPI.Controllers
                 //acceder al sistema
             }
 
-            // PUT Usuarios/Editar
+            ////** PUT Usuarios/Editar
             [HttpPut("Editar")]
 
-            public async Task<ActionResult> EditarUsuario([FromForm] Usuario obtenido)
+            public async Task<ActionResult> EditarUsuario([FromBody] Usuario obtenido)
             {
                 //primero buscar por mail
                 try
@@ -124,12 +124,60 @@ namespace preguntaloAPI.Controllers
                 } catch (Exception ex) { 
                     return BadRequest("Error general "+ ex.Message); 
                 }
-
-                //loguear usuario
-                //acceder al sistema
             }
 
-            // POST Usuarios/login
+            ////** PUT Usuarios/EditarPassword
+            [HttpPut("EditarPassword")]
+
+            public async Task<ActionResult> EditarPassword([FromBody] PassView passview)
+            {
+                //primero buscar por mail
+                try
+                {
+                    var entidad = contexto.Usuarios.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
+                    if(entidad != null)
+                    {
+                        //modifica password
+                        //*primero corroborar que el password viejo sea el correcto
+                        try{
+                            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                                password: passview.Password,
+					            salt: System.Text.Encoding.ASCII.GetBytes(config["SALT"]),
+					            prf: KeyDerivationPrf.HMACSHA1,
+					            iterationCount: 1000,
+					            numBytesRequested: 256 / 8));
+                            if(hashed == entidad.Password){
+                                //? deberia controlar del lado del back si newPass y ConfirmPass son iguales?
+                                //* modifica password con newPassword
+                                entidad.Password = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                                    password: passview.NewPassword,
+                                    salt: System.Text.Encoding.ASCII.GetBytes(config["SALT"]),
+                                    prf: KeyDerivationPrf.HMACSHA1,
+                                    iterationCount: 1000,
+                                    numBytesRequested: 256 / 8));
+                            }else{
+                                return BadRequest("Password incorrecto");
+                            }
+                        }catch(Exception ex){
+                            return BadRequest("Error en cambiar pass: " + ex.Message);
+                        }
+                        try
+                        {
+                            await contexto.SaveChangesAsync();
+                            var modificado = contexto.Usuarios.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
+					        return Ok(modificado);
+                        } catch(Exception ex) {
+                            return BadRequest("Error en SaveChanges: " + ex.Message);
+                        }   
+                    }else { 
+                        return BadRequest("Entidad no encontrada"); 
+                    } 
+                } catch (Exception ex) { 
+                    return BadRequest("Error general "+ ex.Message); 
+                }
+            }
+
+            //** POST Usuarios/login
             [HttpPost("login")]
             [AllowAnonymous]
             public async Task<IActionResult> Login([FromBody] LoginView loginView)
@@ -137,12 +185,14 @@ namespace preguntaloAPI.Controllers
                 try
 			{
 				string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-					password: loginView.Clave,
+					password: loginView.Password,
 					salt: System.Text.Encoding.ASCII.GetBytes(config["SALT"]),
 					prf: KeyDerivationPrf.HMACSHA1,
 					iterationCount: 1000,
 					numBytesRequested: 256 / 8));
 				var usuario = await contexto.Usuarios.FirstOrDefaultAsync(x => x.Email == loginView.Email);
+                Console.Write("Clave: " + loginView.Password + " Hash: " + hashed);
+                Console.Write("Usuario: " + usuario.Email);
 				if (usuario == null || usuario.Password != hashed) //testear con |loginView.Clave != "prueba"|   en vez de   | usuario.Password != hashed |
 				{
 					return BadRequest("Nombre de usuario o clave incorrecta");
@@ -162,7 +212,7 @@ namespace preguntaloAPI.Controllers
 						issuer: config["TokenAuthentication:Issuer"],
 						audience: config["TokenAuthentication:Audience"],
 						claims: claims,
-						expires: DateTime.Now.AddMinutes(600),
+						expires: DateTime.Now.AddMinutes(6000),
 						signingCredentials: credenciales
 					);
 					return Ok(new JwtSecurityTokenHandler().WriteToken(token));

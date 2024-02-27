@@ -41,7 +41,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Administrador", policy => policy.RequireRole("Administrador"));
 });
 
-
+builder.WebHost.UseUrls("http://localhost:5247", "http://192.168.0.11:5247");
 
 
 var app = builder.Build();

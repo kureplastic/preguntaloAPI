@@ -10,5 +10,9 @@ namespace preguntaloAPI.Models
         }
         public DbSet<Usuario> Usuarios { get; set; } 
         public DbSet<Consulta> Consultas { get; set; }
+        public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<Consulta_Categoria> Consultas_Categorias { get; set; }
+        public DbSet<Respuesta> Respuestas { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
     }
 }
