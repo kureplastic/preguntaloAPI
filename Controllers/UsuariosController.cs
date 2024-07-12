@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using NuGet.Protocol;
 
 
 namespace preguntaloAPI.Controllers
@@ -74,18 +75,21 @@ namespace preguntaloAPI.Controllers
                         //para este registro se deberian crear en el momento un rating nuevo
                         registro.RatingId = null;
                         try{
+                            Console.WriteLine("entro correctamente al final de la ejecucion");
                             var tareaasync = await contexto.Usuarios.AddAsync(registro);
                             contexto.SaveChanges();
                             //deveuelve la entidad
                             return Ok(tareaasync.Entity);
                         }catch(Exception ex){
+                            Console.WriteLine("problema al final de la ejecucion");
                             return BadRequest(ex.Message);
                         }
                         
                     }else{
-                        return BadRequest("Ya existe un usuario con ese email"); 
+                        return BadRequest("Ya existe un usuario con ese email!"); 
                     } 
                 }catch (Exception ex){
+                    Console.WriteLine("problema general de la ejecucion");
                     return BadRequest(ex.Message);
                 }
                 //loguear usuario
@@ -191,14 +195,16 @@ namespace preguntaloAPI.Controllers
 					iterationCount: 1000,
 					numBytesRequested: 256 / 8));
 				var usuario = await contexto.Usuarios.FirstOrDefaultAsync(x => x.Email == loginView.Email);
-                Console.Write("Clave: " + loginView.Password + " Hash: " + hashed);
-                Console.Write("Usuario: " + usuario.Email);
+                Console.WriteLine("Clave: " + loginView.Password + " Hash: " + hashed);
+                Console.WriteLine("Usuario: " + usuario.Email);
 				if (usuario == null || usuario.Password != hashed) //testear con |loginView.Clave != "prueba"|   en vez de   | usuario.Password != hashed |
 				{
-					return BadRequest("Nombre de usuario o clave incorrecta");
+					Console.WriteLine("no encuentra Usuario");
+                    return BadRequest("Nombre de usuario o clave incorrecta");
 				}
 				else
 				{
+                    Console.WriteLine("encontro al usuario y lo loguea");
 					var key = new SymmetricSecurityKey(
 						System.Text.Encoding.ASCII.GetBytes(config["TokenAuthentication:SecretKey"]));
 					var credenciales = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

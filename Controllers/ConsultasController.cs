@@ -114,8 +114,11 @@ namespace preguntaloAPI.Controllers
         [HttpGet("Obtener/{Id}")]
         public async Task<IActionResult> Obtener(int Id){
             var emailUsuario = User.Identity.Name;
-            var consultaLlena = await contexto.Consultas.Include(consulta => consulta.Usuario).Where(consulta => consulta.Id == Id &&  (consulta as Consulta).Usuario.Email == emailUsuario ).FirstOrDefaultAsync();  
+            var consultaLlena = await contexto.Consultas.Include(consulta => consulta.Usuario).Where(consulta => consulta.Id == Id &&  (consulta as Consulta).Usuario.Id == consulta.UsuarioId ).FirstOrDefaultAsync();  
             try{
+                if(consultaLlena !=null){
+                    consultaLlena.Usuario.Password = null;
+                }
                 return consultaLlena != null ? Ok(consultaLlena) : BadRequest("Consulta no encontrada");
             }catch(Exception ex){
                 return BadRequest(ex.Message);
@@ -127,7 +130,7 @@ namespace preguntaloAPI.Controllers
         public async Task<IActionResult> ObtenerTodas(){
             var emailUsuario = User.Identity.Name;
             try{
-                var consultas = await contexto.Consultas.Where(consulta => consulta.Texto != null).ToListAsync();
+                var consultas = await contexto.Consultas.Where(consulta => consulta.Texto != null).OrderByDescending(consulta => consulta.Id).ToListAsync();
                 return consultas != null ? Ok(consultas) : BadRequest("No hay consultas con este criterio");
             }catch(Exception ex){
                 return BadRequest(ex.Message);
@@ -140,6 +143,18 @@ namespace preguntaloAPI.Controllers
             var emailUsuario = User.Identity.Name;
             try{
                 var consultas = await contexto.Consultas.Where(consulta => consulta.Texto.Contains(busqueda)).ToListAsync();
+                return consultas != null ? Ok(consultas) : BadRequest("No hay consultas con este criterio");
+            }catch(Exception ex){
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //** GET: Consultas/ObtenerPorUsuario
+        [HttpGet("ObtenerPorUsuario")]
+        public async Task<IActionResult> ObtenerPorUsuario(){
+            var emailUsuario = User.Identity.Name;
+            try{
+                var consultas = await contexto.Consultas.Include(consulta => consulta.Usuario).Where(consulta => consulta.Usuario.Email == emailUsuario && consulta.Texto != null).OrderByDescending(consulta => consulta.Id).ToListAsync();
                 return consultas != null ? Ok(consultas) : BadRequest("No hay consultas con este criterio");
             }catch(Exception ex){
                 return BadRequest(ex.Message);
