@@ -19,5 +19,20 @@ namespace preguntaloAPI.Models
         public int RespuestasElegidas {get; set;} = 0;
         public int RespuestasContestadas {get; set;} = 0;
         public int ConsultasRealizadas {get; set;} = 0;
+
+        public void ModificarPuntuacion(bool PuntuacionPositiva){
+            if(PuntuacionPositiva){
+                this.PuntuacionPositiva++;
+            }else{
+                this.PuntuacionNegativa++;
+            }
+        }
+        public void EliminarPuntuacion(bool PuntuacionPositiva){
+            if(PuntuacionPositiva){
+                this.PuntuacionPositiva--;
+            }else{
+                this.PuntuacionNegativa--;
+            }
+        }
     }
 }

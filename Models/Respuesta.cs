@@ -8,13 +8,39 @@ public class Respuesta{
     public int Id { get; set; }
     [Required]
     public int UsuarioId { get; set; }
+    [ForeignKey(nameof(UsuarioId))]
     public Usuario? Usuario { get; set; }
     [Required]
     public int ConsultaId { get; set; }
+    [ForeignKey(nameof(ConsultaId))]
     public Consulta? Consulta { get; set; } 
     public int? RespuestaId { get; set; } = null;
     [Required]
     public string? Texto {get; set;}
     public int PuntuacionPositiva {get; set;} = 0;
     public int PuntuacionNegativa {get; set;} = 0;
+
+    internal void CambiarPuntuacion(bool puntuacionPositiva)
+    {
+        if (puntuacionPositiva)
+        {
+            this.PuntuacionPositiva++;
+        }
+        else
+        {
+            this.PuntuacionNegativa++;
+        }
+    }
+
+    internal void EliminarPuntuacion(bool puntuacionPositiva)
+    {
+        if (puntuacionPositiva)
+        {
+            this.PuntuacionPositiva--;
+        }
+        else
+        {
+            this.PuntuacionNegativa--;
+        }
+    }
 }

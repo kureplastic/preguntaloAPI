@@ -1,5 +1,6 @@
 namespace preguntaloAPI.Models;
 
+using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -24,8 +25,31 @@ public class Consulta{
         public bool Resuelto {get; set;} = false;
         public int? RespuestaSeleccionada {get; set;} = null;
         public int PuntuacionPositiva {get; set;} = 0;
-        public int PuntuacionNegativa {get; set;} = 0;        
+        public int PuntuacionNegativa {get; set;} = 0;
 
+    internal void CambiarPuntuacion(bool puntuacionPositiva)
+    {
+        if (puntuacionPositiva)
+        {
+            this.PuntuacionPositiva++;
+        }
+        else
+        {
+            this.PuntuacionNegativa++;
+        }
+    }
+
+    internal void EliminarPuntuacion(bool puntuacionPositiva)
+    {
+        if (puntuacionPositiva)
+        {
+            this.PuntuacionPositiva--;
+        }
+        else
+        {
+            this.PuntuacionNegativa--;
+        }
+    }
 }
 
 

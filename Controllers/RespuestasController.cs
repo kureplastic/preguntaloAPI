@@ -55,9 +55,15 @@ namespace preguntaloAPI.Controllers
             try
             {
                 var tareaasync = await contexto.Respuestas.AddAsync(nuevaRespuesta);
+                //obtener el rating del usuario logueado y aumentarle un punto a RespuestasContestadas
+                var usuario = await contexto.Usuarios.Include(usuario => usuario.Rating).Where(usuario => usuario.Id == Int32.Parse(ClaimId.Value)).FirstOrDefaultAsync();
+                usuario.Rating.RespuestasContestadas++;
+
                 await contexto.SaveChangesAsync();
                 //deveuelve la entidad
-                return Ok(tareaasync.Entity);
+                //llenar todos los campos de la respuesta que se acaba de crear junto con la consulta y con el usuario
+                var entidadAEnviar = await contexto.Respuestas.Include(respuesta => respuesta.Consulta).Include(respuesta => respuesta.Consulta.Usuario).Where(respuesta => respuesta.Id == tareaasync.Entity.Id).FirstOrDefaultAsync();
+                return Ok(entidadAEnviar);
             }catch(Exception ex){
                 return BadRequest(ex.Message);
             }
@@ -92,7 +98,7 @@ namespace preguntaloAPI.Controllers
             //guarda en db
             try{
                 await contexto.SaveChangesAsync();
-                var modificado = contexto.Respuestas.Where(respuesta => respuesta.Id == editada.Id).FirstOrDefault();
+                var modificado = contexto.Respuestas.Include(respuesta => respuesta.Consulta).Include(respuesta => respuesta.Usuario).Where(respuesta => respuesta.Id == editada.Id).FirstOrDefault();
                 return Ok(modificado);
             }catch(Exception ex){
                 return BadRequest(ex.Message);
@@ -110,7 +116,9 @@ namespace preguntaloAPI.Controllers
             try{
                 contexto.Respuestas.Remove(respuesta);
                 await contexto.SaveChangesAsync();
-                return Ok("Respuesta eliminada");
+                var respuestaAPI = new StringRespuesta();
+                respuestaAPI.respuesta = "Respuesta eliminada";
+                return Ok(respuestaAPI);
             }catch(Exception ex){
                 return BadRequest(ex.Message);
             }
@@ -121,7 +129,7 @@ namespace preguntaloAPI.Controllers
         public async Task<IActionResult> ObtenerDeConsulta(int id)
         {
             try{
-                var respuestas = await contexto.Respuestas.Where(respuesta => respuesta.ConsultaId == id).ToListAsync();
+                var respuestas = await contexto.Respuestas.Include(respuesta =>respuesta.Usuario).Include(respuesta => respuesta.Consulta).Where(respuesta => respuesta.ConsultaId == id).OrderByDescending(respuesta =>respuesta.Id).ToListAsync();
                 if(respuestas == null){
                     return BadRequest("Error en respuestas");
                 }
@@ -137,7 +145,7 @@ namespace preguntaloAPI.Controllers
         public async Task<IActionResult> ObtenerDeRespuesta(int id)
         {
             try{
-                var respuestas = await contexto.Respuestas.Where(respuesta => respuesta.RespuestaId == id).ToListAsync();
+                var respuestas = await contexto.Respuestas.Include(respuesta => respuesta.Usuario).Where(respuesta => respuesta.RespuestaId == id).ToListAsync();
                 if(respuestas == null || respuestas.Count == 0){
                     return BadRequest("No se encontraron respuestas");
                 }

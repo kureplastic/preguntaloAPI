@@ -21,6 +21,8 @@ public class Usuario{
         public Rating? Rating { get; set; }
         public string? FotoPerfil { get; set; }
         public int? ValidacionId { get; set; }
+        [ForeignKey(nameof(ValidacionId))]
+        public Validacion? Validacion { get; set; }
         
 
 }

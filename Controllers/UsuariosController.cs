@@ -40,7 +40,12 @@ namespace preguntaloAPI.Controllers
                 try{
                     var ClaimID = ((ClaimsIdentity) User.Identity).FindFirst("UserId");
                     var entidad = await contexto.Usuarios.SingleOrDefaultAsync(usuario => usuario.Id == Int32.Parse(ClaimID.Value));
-                    return entidad != null ? Ok(entidad) : BadRequest("Entidad no existe");
+                    if (entidad != null){
+                        //obtengamos el perfil junto con el rating y la validacion si existe
+                        var usuarioCompleto = await contexto.Usuarios.Include(u => u.Validacion).Where(u => u.Id == entidad.Id).SingleOrDefaultAsync();
+                        return usuarioCompleto != null ? Ok(usuarioCompleto) : BadRequest("Entidad no existe");
+                    }
+                    return BadRequest("Entidad no existe");
                 }
                 catch (Exception ex){
                     return BadRequest(ex.Message);
@@ -73,15 +78,28 @@ namespace preguntaloAPI.Controllers
                         registro.FotoPerfil = null;
                         registro.ValidacionId = null;
                         //para este registro se deberian crear en el momento un rating nuevo
-                        registro.RatingId = null;
                         try{
-                            Console.WriteLine("entro correctamente al final de la ejecucion");
-                            var tareaasync = await contexto.Usuarios.AddAsync(registro);
-                            contexto.SaveChanges();
-                            //deveuelve la entidad
-                            return Ok(tareaasync.Entity);
+                            var rating = new Rating();
+                            var tareaasyncRating = await contexto.Ratings.AddAsync(rating);
+                            await contexto.SaveChangesAsync();
+                            if(tareaasyncRating == null){
+                                return BadRequest("Error al registrar rating");
+                            }else{
+                                registro.RatingId = rating.Id;
+                                try{
+                                    Console.WriteLine("entro correctamente al final de la ejecucion");
+                                    var tareaasync = await contexto.Usuarios.AddAsync(registro);
+                                    await contexto.SaveChangesAsync();
+                                    //deveuelve la entidad
+                                    return Ok(tareaasync.Entity);
+                                }catch(Exception ex){
+                                    Console.WriteLine(ex.Message);
+                                    return BadRequest(ex.Message);
+                                }
+                            }
+
                         }catch(Exception ex){
-                            Console.WriteLine("problema al final de la ejecucion");
+                            Console.WriteLine(ex.Message);
                             return BadRequest(ex.Message);
                         }
                         
@@ -98,8 +116,7 @@ namespace preguntaloAPI.Controllers
 
             ////** PUT Usuarios/Editar
             [HttpPut("Editar")]
-
-            public async Task<ActionResult> EditarUsuario([FromBody] Usuario obtenido)
+            public async Task<ActionResult> Editar([FromBody] Usuario obtenido)
             {
                 //primero buscar por mail
                 try
@@ -120,19 +137,21 @@ namespace preguntaloAPI.Controllers
                             var modificado = contexto.Usuarios.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
 					        return Ok(modificado);
                         } catch(Exception ex) {
+                            Console.WriteLine("Error en SaveChanges: " + ex.Message);
                             return BadRequest("Error en SaveChanges: " + ex.Message);
                         }   
                     }else { 
+                        Console.WriteLine("Entidad no encontrada");
                         return BadRequest("Entidad no encontrada"); 
                     } 
                 } catch (Exception ex) { 
+                    Console.WriteLine("Error general "+ ex.Message);
                     return BadRequest("Error general "+ ex.Message); 
                 }
             }
 
             ////** PUT Usuarios/EditarPassword
             [HttpPut("EditarPassword")]
-
             public async Task<ActionResult> EditarPassword([FromBody] PassView passview)
             {
                 //primero buscar por mail
@@ -181,6 +200,25 @@ namespace preguntaloAPI.Controllers
                 }
             }
 
+            //** PUT Usuarios/EditarFotoPerfil
+            [HttpPut("EditarFotoPerfil")]
+            public async Task<ActionResult> EditarFotoPerfil([FromBody] string url)
+            {
+                var entidad = contexto.Usuarios.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
+                if(entidad != null){
+                    entidad.FotoPerfil = url;
+                    try{
+                        await contexto.SaveChangesAsync();
+                        var modificado = contexto.Usuarios.Where(x => x.Email == User.Identity.Name).FirstOrDefault();
+                        return Ok(modificado);
+                    }catch(Exception ex){
+                        return BadRequest(ex.Message);
+                    }
+                }else{
+                    return BadRequest("Entidad no encontrada");
+                }
+            }
+
             //** POST Usuarios/login
             [HttpPost("login")]
             [AllowAnonymous]
@@ -218,7 +256,7 @@ namespace preguntaloAPI.Controllers
 						issuer: config["TokenAuthentication:Issuer"],
 						audience: config["TokenAuthentication:Audience"],
 						claims: claims,
-						expires: DateTime.Now.AddMinutes(6000),
+						expires: DateTime.Now.AddDays(30),
 						signingCredentials: credenciales
 					);
 					return Ok(new JwtSecurityTokenHandler().WriteToken(token));
@@ -229,5 +267,31 @@ namespace preguntaloAPI.Controllers
 				return BadRequest(ex.Message);
 			}    
             }
+
+            //** POST Usuarios/CrearValidacion
+            [HttpPost("CrearValidacion")]
+            public async Task<IActionResult> CrearValidacion([FromBody] Validacion validacion){
+                //obtener usuario logueado
+                var emailUsuario = User.Identity.Name;
+                try{
+                    var usuario = await contexto.Usuarios.Where(x => x.Email == emailUsuario).FirstOrDefaultAsync();
+                    if(usuario.ValidacionId != null){
+                        return BadRequest("Ya existe una validacion");
+                    }
+                    validacion.Confirmada = true;
+                    var enviar = await contexto.Validaciones.AddAsync(validacion);
+                    if(enviar != null){
+                        var result = await contexto.SaveChangesAsync();
+                        usuario.ValidacionId = enviar.Entity.Id;
+                        contexto.SaveChanges();
+                        return Ok(enviar.Entity);
+                    }else{
+                        return BadRequest("Error al crear validacion");
+                    }
+                }catch (Exception ex){
+                    return BadRequest(ex.Message);
+                }
+            }
+            
         }
 }

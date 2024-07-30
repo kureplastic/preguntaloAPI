@@ -14,5 +14,7 @@ namespace preguntaloAPI.Models
         public DbSet<Consulta_Categoria> Consultas_Categorias { get; set; }
         public DbSet<Respuesta> Respuestas { get; set; }
         public DbSet<Rating> Ratings { get; set; }
+        public DbSet<Puntuacion> Puntuaciones { get; set; }
+        public DbSet<Validacion> Validaciones { get; set; }
     }
 }
